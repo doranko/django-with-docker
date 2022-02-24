@@ -1,0 +1,43 @@
+version: "3"
+services:
+    wait:
+        image: dadarek/wait-for-dependencies
+        container_name: "wait"
+        depends_on:
+            - postgres
+    postgres:
+        image: postgres:10
+        container_name: "postgres"
+        environment:
+            POSTGRES_USER: user
+            POSTGRES_PASSWORD: pass
+            POSTGRES_DB: mydb
+        ports:
+            - "15432:5432"
+        volumes:
+            - ./database:/var/lib/postgresql/data
+        networks:
+            - db-net
+    django:
+        build: .
+        image: "django"
+        container_name: "django"
+        working_dir: /sample
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - ./sample:/sample
+        ports:
+            - "8000:8000"
+        networks:
+            - db-net
+        depends_on:
+            - postgres
+            - wait
+
+volumes:
+    database:
+        driver: local
+
+networks:
+    db-net:
+        driver: bridge
